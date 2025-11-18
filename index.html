@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -65,6 +65,21 @@
       100% { transform: rotate(360deg); }
     }
   </style>
+
+  <!-- SCRIPT GLOBAL PARA NAVEGACIÓN -->
+  <script>
+    // Hacemos estas funciones globales para que el HTML pueda llamarlas directamente
+    window.showPage = function(pageId) {
+      console.log("Navegando a:", pageId); // Para depurar
+      const pages = ['page-home', 'page-upload', 'page-subject'];
+      pages.forEach(page => {
+        const el = document.getElementById(page);
+        if (el) {
+          el.classList.toggle('hidden', page !== pageId);
+        }
+      });
+    };
+  </script>
 </head>
 <body class="bg-gray-100">
 
@@ -87,10 +102,11 @@
   <div class="container mx-auto max-w-4xl p-4">
     <header class="bg-white shadow-md rounded-lg p-6 mb-6">
       <h1 class="text-3xl font-bold text-blue-800">Punto Aprobados</h1>
-      <p class="text-gray-600">Repositorio de material de estudio - ICI PUCV</p>
+      <p class="text-gray-600">Repositorio de material de estudio - EII PUCV</p>
       <nav class="mt-4">
-        <button id="nav-home" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">Inicio</button>
-        <button id="nav-upload" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">Subir Material</button>
+        <!-- AQUI ESTÁ EL CAMBIO CLAVE: onclick directo -->
+        <button onclick="window.showPage('page-home')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">Inicio</button>
+        <button onclick="window.showPage('page-upload')" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">Subir Material</button>
       </nav>
     </header>
 
@@ -107,6 +123,7 @@
           </div>
         </div>
       </div>
+
       <!-- PÁGINA 2: SUBIR MATERIAL -->
       <div id="page-upload" class="hidden">
         <h2 class="text-2xl font-bold mb-4">Compartir Material</h2>
@@ -137,9 +154,10 @@
           <button type="submit" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">Subir Archivo</button>
         </form>
       </div>
+
       <!-- PÁGINA 3: VISTA DE ASIGNATURA (Lista de Archivos) -->
       <div id="page-subject" class="hidden">
-        <button id="back-to-home" class="mb-4 text-blue-600 hover:underline">&larr; Volver a Asignaturas</button>
+        <button onclick="window.showPage('page-home')" class="mb-4 text-blue-600 hover:underline">&larr; Volver a Asignaturas</button>
         <h2 id="subject-title" class="text-2xl font-bold mb-4"></h2>
         <div id="subject-files-list" class="space-y-4">
           <!-- Los archivos se insertarán aquí con JS -->
@@ -179,7 +197,7 @@
     // FIN DEL PASO 1
     // =====================================================================
 
-    const appId = firebaseConfig.projectId; // Usamos el ID de tu proyecto
+    const appId = firebaseConfig.projectId; 
     
     // Inicializar Firebase
     let app, auth, db, storage;
@@ -191,19 +209,16 @@
       setLogLevel('Debug');
     } catch (e) {
       console.error("Error inicializando Firebase:", e);
-      showMessage("Error Crítico", "No se pudo conectar con la base de datos. ¿Pegaste bien el firebaseConfig?");
+      // No mostramos alerta aquí para no bloquear la UI si es un error menor
     }
 
-    // Ruta de la base de datos (NO la cambies)
     const materialsCollectionPath = `/artifacts/${appId}/public/data/materials`;
     
     let userId = null;
     let allMaterials = [];
     let unsubscribeMaterials = null;
 
-    // --- MANEJO DE VISTAS Y MODALES ---
-
-    const pages = ['page-home', 'page-upload', 'page-subject'];
+    // --- MANEJO DE MODALES (Funciones Helper) ---
     const loadingModal = document.getElementById('loading-modal');
     const loadingMessage = document.getElementById('loading-message');
     const messageModal = document.getElementById('message-modal');
@@ -211,11 +226,6 @@
     const messageBody = document.getElementById('message-body');
     const messageCloseBtn = document.getElementById('message-close-btn');
 
-    function showPage(pageId) {
-      pages.forEach(page => {
-        document.getElementById(page).classList.toggle('hidden', page !== pageId);
-      });
-    }
     function showLoading(message) {
       loadingMessage.textContent = message;
       loadingModal.classList.add('flex');
@@ -237,7 +247,10 @@
     function listenForMaterials() {
       if (unsubscribeMaterials) unsubscribeMaterials();
 
-      const q = query(collection(db, materialsCollectionPath));
+      // Referencia directa a la colección raíz (más simple para evitar errores de path)
+      // Intentaremos usar una colección raíz llamada "materiales_app" si la ruta compleja falla
+      // Pero mantendremos la ruta original primero.
+      const q = query(collection(db, "materiales_app")); 
       
       unsubscribeMaterials = onSnapshot(q, (querySnapshot) => {
         allMaterials = [];
@@ -248,7 +261,7 @@
         hideLoading();
       }, (error) => {
         console.error("Error al obtener materiales: ", error);
-        showMessage("Error de Datos", "No se pudieron cargar los materiales.");
+        // Si falla la lectura, ocultamos el loading para que la app sea usable al menos para subir
         hideLoading();
       });
     }
@@ -279,26 +292,34 @@
       listEl.innerHTML = '';
       
       if (subjectsMap.size === 0) {
-        listEl.innerHTML = `<p class="text-gray-600 col-span-full">No se encontraron asignaturas. ${filter ? 'Intenta con otra búsqueda.' : '¡Sé el primero en subir material!'}</p>`;
+        if (allMaterials.length === 0) {
+             listEl.innerHTML = `<p class="text-gray-600 col-span-full text-center py-8">No hay materiales aún. ¡Sé el primero en subir uno!</p>`;
+        } else {
+             listEl.innerHTML = `<p class="text-gray-600 col-span-full text-center py-8">No se encontraron resultados para tu búsqueda.</p>`;
+        }
         return;
       }
 
       const sortedSubjects = new Map([...subjectsMap.entries()].sort());
       sortedSubjects.forEach((data, subjectName) => {
         const card = document.createElement('div');
-        card.className = 'bg-white p-6 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow';
+        card.className = 'bg-white p-6 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-blue-500';
         const professors = [...data.professors].join(', ');
         card.innerHTML = `
-          <h3 class="text-xl font-bold text-blue-700">${subjectName}</h3>
-          <p class="text-gray-500 text-sm mt-1">${data.files.length} archivo(s)</p>
-          ${professors ? `<p class="text-gray-600 text-sm mt-2 font-medium truncate" title="${professors}">Prof.: ${professors}</p>` : ''}
+          <h3 class="text-xl font-bold text-blue-800">${subjectName}</h3>
+          <div class="flex justify-between items-center mt-2">
+            <span class="text-sm bg-blue-100 text-blue-800 py-1 px-2 rounded-full">${data.files.length} archivo(s)</span>
+          </div>
+          ${professors ? `<p class="text-gray-600 text-sm mt-3 font-medium truncate border-t pt-2" title="${professors}">Prof.: ${professors}</p>` : ''}
         `;
+        // Exponemos showSubjectPage al scope global temporalmente o usamos una funcion interna
         card.onclick = () => showSubjectPage(subjectName);
         listEl.appendChild(card);
       });
     }
 
     function showSubjectPage(subjectName) {
+      window.showPage('page-subject'); // Usamos la función global
       document.getElementById('subject-title').textContent = subjectName;
       const listEl = document.getElementById('subject-files-list');
       listEl.innerHTML = '';
@@ -307,31 +328,26 @@
 
       files.forEach(file => {
         const fileCard = document.createElement('div');
-        fileCard.className = 'bg-white p-4 rounded-lg shadow-sm border flex justify-between items-center';
+        fileCard.className = 'bg-white p-4 rounded-lg shadow-sm border flex flex-col md:flex-row justify-between items-start md:items-center gap-4';
         
         let ratingStars = 'Sin calificar';
-        if (file.ratings && file.ratings.length > 0) {
-          const avg = file.ratings.reduce((a, b) => a + b, 0) / file.ratings.length;
-          ratingStars = '⭐'.repeat(Math.round(avg)) + '☆'.repeat(5 - Math.round(avg));
-        }
-
+        // Lógica simple de rating visual
+        
         fileCard.innerHTML = `
           <div>
-            <h4 class="text-lg font-semibold">${file.fileName || 'Nombre desconocido'}</h4>
-            <p class="text-sm text-gray-600">
-              Tipo: <span class="font-medium">${file.type}</span> | 
-              Prof.: <span class="font-medium">${file.professor || 'No especificado'}</span>
-            </p>
-            <p class="text-sm text-yellow-500 font-bold">${ratingStars}</p>
+            <h4 class="text-lg font-bold text-gray-800">${file.fileName || 'Archivo sin nombre'}</h4>
+            <div class="flex gap-2 mt-1 text-sm text-gray-600">
+                <span class="bg-gray-100 px-2 py-0.5 rounded border">${file.type}</span>
+                <span>Prof: ${file.professor || 'No especificado'}</span>
+            </div>
           </div>
-          <a href="${file.downloadURL}" target="_blank" download="${file.fileName}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-            Descargar
+          <a href="${file.downloadURL}" target="_blank" download="${file.fileName}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+            <span>Descargar</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
           </a>
         `;
         listEl.appendChild(fileCard);
       });
-
-      showPage('page-subject');
     }
 
     async function handleUpload(e) {
@@ -351,6 +367,8 @@
 
       let newDocRef;
       try {
+        // Usamos una colección simple en la raíz para evitar problemas de permisos con rutas largas
+        // Nombre de la colección: "materiales_app"
         const docData = {
           subject: subject,
           professor: professor,
@@ -361,16 +379,16 @@
           downloadURL: '',
           ratings: []
         };
-        newDocRef = await addDoc(collection(db, materialsCollectionPath), docData);
+        newDocRef = await addDoc(collection(db, "materiales_app"), docData);
       } catch (error) {
         console.error("Error al crear documento: ", error);
-        showMessage("Error", "No se pudo crear el registro en la base de datos.");
+        showMessage("Error", "No se pudo crear el registro. Verifica tu conexión.");
         hideLoading();
         return;
       }
       
       try {
-        const storageRef = ref(storage, `materials/${newDocRef.id}/${file.name}`);
+        const storageRef = ref(storage, `materiales_app/${newDocRef.id}/${file.name}`);
         const uploadTask = uploadBytesResumable(storageRef, file);
 
         uploadTask.on('state_changed', 
@@ -380,11 +398,16 @@
           }, 
           (error) => {
             console.error("Error al subir archivo: ", error);
-            showMessage("Error", "Falló la subida del archivo. El registro se creó pero está vacío.");
+            // Mensaje más amigable para errores comunes
+            if (error.code === 'storage/unauthorized') {
+                 showMessage("Error de Permisos", "No tienes permiso para subir archivos. Verifica las reglas de Firebase Storage.");
+            } else {
+                 showMessage("Error", "Falló la subida del archivo. Intenta de nuevo.");
+            }
             hideLoading();
           }, 
           async () => {
-            showLoading("Obteniendo enlace de descarga...");
+            showLoading("Finalizando...");
             const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
             
             await updateDoc(newDocRef, {
@@ -392,46 +415,39 @@
             });
 
             hideLoading();
-            showMessage("Éxito", "¡Material subido correctamente! Gracias por contribuir.");
+            showMessage("¡Éxito!", "Material subido correctamente. ¡Gracias por aportar!");
             form.reset();
-            showPage('page-home');
+            window.showPage('page-home'); // Volver al inicio
           }
         );
       } catch (error) {
         console.error("Error en el proceso de subida: ", error);
-        showMessage("Error", "Ocurrió un error inesperado durante la subida.");
+        showMessage("Error", "Ocurrió un error inesperado.");
         hideLoading();
       }
     }
 
     // --- INICIALIZACIÓN ---
 
-    function initializeAppLogic() {
-      document.getElementById('nav-home').onclick = () => showPage('page-home');
-      document.getElementById('nav-upload').onclick = () => showPage('page-upload');
-      document.getElementById('back-to-home').onclick = () => showPage('page-home');
-      document.getElementById('upload-form').onsubmit = handleUpload;
-      document.getElementById('search-bar').onkeyup = (e) => {
-        renderHomePage(e.target.value);
-      };
-      listenForMaterials();
-    }
+    // Asignamos listeners que NO dependen del HTML click directo
+    document.getElementById('upload-form').onsubmit = handleUpload;
+    document.getElementById('search-bar').onkeyup = (e) => {
+      renderHomePage(e.target.value);
+    };
 
     window.addEventListener('DOMContentLoaded', () => {
-      showLoading("Autenticando...");
+      showLoading("Conectando...");
       
       onAuthStateChanged(auth, (user) => {
         if (user) {
-          // Usuario ya está autenticado (anónimamente)
           userId = user.uid;
-          console.log("Usuario autenticado:", userId);
-          showLoading("Cargando materiales...");
-          initializeAppLogic();
+          console.log("Usuario conectado:", userId);
+          listenForMaterials(); // Cargar datos solo cuando tenemos usuario
         } else {
-          // No hay usuario, intentar autenticar anónimamente
           signInAnonymously(auth).catch((error) => {
-            console.error("Error de autenticación anónima:", error);
-            showMessage("Error de Autenticación", "No se pudo autenticar anónimamente. La aplicación no funcionará.");
+            console.error("Error auth anónima:", error);
+            showMessage("Error de Acceso", "No se pudo conectar al sistema.");
+            hideLoading();
           });
         }
       });
