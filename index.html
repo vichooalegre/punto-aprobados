@@ -1,4 +1,4 @@
-
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -70,7 +70,7 @@
   <script>
     // Hacemos estas funciones globales para que el HTML pueda llamarlas directamente
     window.showPage = function(pageId) {
-      console.log("Navegando a:", pageId); // Para depurar
+      console.log("Navegando a:", pageId);
       const pages = ['page-home', 'page-upload', 'page-subject'];
       pages.forEach(page => {
         const el = document.getElementById(page);
@@ -104,7 +104,6 @@
       <h1 class="text-3xl font-bold text-blue-800">Punto Aprobados</h1>
       <p class="text-gray-600">Repositorio de material de estudio - EII PUCV</p>
       <nav class="mt-4">
-        <!-- AQUI ESTÁ EL CAMBIO CLAVE: onclick directo -->
         <button onclick="window.showPage('page-home')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">Inicio</button>
         <button onclick="window.showPage('page-upload')" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">Subir Material</button>
       </nav>
@@ -168,9 +167,9 @@
 
   <!-- JAVASCRIPT Y LÓGICA DE FIREBASE -->
   <script type="module">
-    // 3. Importar Firebase
+    // 3. Importar Firebase (CORREGIDO: Quitamos setLogLevel)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { 
       getFirestore, collection, addDoc, onSnapshot, 
       doc, updateDoc, serverTimestamp, query 
@@ -207,10 +206,9 @@
       auth = getAuth(app);
       db = getFirestore(app);
       storage = getStorage(app);
-      setLogLevel('Debug');
+      // CORREGIDO: Eliminamos setLogLevel('Debug') porque rompía la app
     } catch (e) {
       console.error("Error inicializando Firebase:", e);
-      // No mostramos alerta aquí para no bloquear la UI si es un error menor
     }
 
     const materialsCollectionPath = `/artifacts/${appId}/public/data/materials`;
@@ -248,9 +246,7 @@
     function listenForMaterials() {
       if (unsubscribeMaterials) unsubscribeMaterials();
 
-      // Referencia directa a la colección raíz (más simple para evitar errores de path)
-      // Intentaremos usar una colección raíz llamada "materiales_app" si la ruta compleja falla
-      // Pero mantendremos la ruta original primero.
+      // Referencia directa a la colección raíz (más simple)
       const q = query(collection(db, "materiales_app")); 
       
       unsubscribeMaterials = onSnapshot(q, (querySnapshot) => {
@@ -262,7 +258,7 @@
         hideLoading();
       }, (error) => {
         console.error("Error al obtener materiales: ", error);
-        // Si falla la lectura, ocultamos el loading para que la app sea usable al menos para subir
+        // Si falla la lectura (permisos), ocultamos el loading
         hideLoading();
       });
     }
@@ -313,14 +309,13 @@
           </div>
           ${professors ? `<p class="text-gray-600 text-sm mt-3 font-medium truncate border-t pt-2" title="${professors}">Prof.: ${professors}</p>` : ''}
         `;
-        // Exponemos showSubjectPage al scope global temporalmente o usamos una funcion interna
         card.onclick = () => showSubjectPage(subjectName);
         listEl.appendChild(card);
       });
     }
 
     function showSubjectPage(subjectName) {
-      window.showPage('page-subject'); // Usamos la función global
+      window.showPage('page-subject');
       document.getElementById('subject-title').textContent = subjectName;
       const listEl = document.getElementById('subject-files-list');
       listEl.innerHTML = '';
@@ -330,9 +325,6 @@
       files.forEach(file => {
         const fileCard = document.createElement('div');
         fileCard.className = 'bg-white p-4 rounded-lg shadow-sm border flex flex-col md:flex-row justify-between items-start md:items-center gap-4';
-        
-        let ratingStars = 'Sin calificar';
-        // Lógica simple de rating visual
         
         fileCard.innerHTML = `
           <div>
@@ -368,8 +360,6 @@
 
       let newDocRef;
       try {
-        // Usamos una colección simple en la raíz para evitar problemas de permisos con rutas largas
-        // Nombre de la colección: "materiales_app"
         const docData = {
           subject: subject,
           professor: professor,
@@ -380,6 +370,7 @@
           downloadURL: '',
           ratings: []
         };
+        // Usamos la colección 'materiales_app'
         newDocRef = await addDoc(collection(db, "materiales_app"), docData);
       } catch (error) {
         console.error("Error al crear documento: ", error);
@@ -399,7 +390,6 @@
           }, 
           (error) => {
             console.error("Error al subir archivo: ", error);
-            // Mensaje más amigable para errores comunes
             if (error.code === 'storage/unauthorized') {
                  showMessage("Error de Permisos", "No tienes permiso para subir archivos. Verifica las reglas de Firebase Storage.");
             } else {
@@ -418,7 +408,7 @@
             hideLoading();
             showMessage("¡Éxito!", "Material subido correctamente. ¡Gracias por aportar!");
             form.reset();
-            window.showPage('page-home'); // Volver al inicio
+            window.showPage('page-home');
           }
         );
       } catch (error) {
@@ -430,7 +420,6 @@
 
     // --- INICIALIZACIÓN ---
 
-    // Asignamos listeners que NO dependen del HTML click directo
     document.getElementById('upload-form').onsubmit = handleUpload;
     document.getElementById('search-bar').onkeyup = (e) => {
       renderHomePage(e.target.value);
@@ -443,7 +432,7 @@
         if (user) {
           userId = user.uid;
           console.log("Usuario conectado:", userId);
-          listenForMaterials(); // Cargar datos solo cuando tenemos usuario
+          listenForMaterials();
         } else {
           signInAnonymously(auth).catch((error) => {
             console.error("Error auth anónima:", error);
@@ -458,4 +447,3 @@
 
 </body>
 </html>
-
