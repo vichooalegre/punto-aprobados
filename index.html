@@ -5,445 +5,389 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Punto Aprobados - EII PUCV</title>
   
-  <!-- 1. Cargar Tailwind CSS -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-          },
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            brand: { light: '#4da6ff', DEFAULT: '#004481', dark: '#002a50' } // Azul más institucional
+          }
         },
       },
     }
   </script>
   
-  <!-- 2. Estilos base y para los modales -->
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      z-index: 50;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      justify-content: center;
-      align-items: center;
-      transition: opacity 0.3s ease;
-    }
-    .modal-content {
-      background-color: white;
-      padding: 2rem;
-      border-radius: 0.5rem;
-      text-align: center;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-      transform: scale(0.95);
-      transition: transform 0.3s ease;
-    }
-    .modal-overlay.flex {
-      display: flex;
-      opacity: 1;
-    }
-    .modal-overlay.flex .modal-content {
-      transform: scale(1);
-    }
-    .spinner {
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #3498db;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 1rem;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+    .modal-overlay { display: none; position: fixed; z-index: 50; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; backdrop-filter: blur(3px); }
+    .modal-overlay.flex { display: flex; }
+    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+    
+    /* Spinner */
+    .spinner { border: 4px solid #e2e8f0; border-top: 4px solid #004481; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 
-  <!-- SCRIPT GLOBAL PARA NAVEGACIÓN -->
   <script>
-    // Hacemos estas funciones globales para que el HTML pueda llamarlas directamente
     window.showPage = function(pageId) {
-      console.log("Navegando a:", pageId);
-      const pages = ['page-home', 'page-upload', 'page-subject'];
-      pages.forEach(page => {
+      ['page-home', 'page-upload', 'page-subject'].forEach(page => {
         const el = document.getElementById(page);
-        if (el) {
-          el.classList.toggle('hidden', page !== pageId);
-        }
+        if (el) el.classList.toggle('hidden', page !== pageId);
       });
+      window.scrollTo(0, 0);
     };
   </script>
 </head>
-<body class="bg-gray-100">
+<body class="text-slate-800">
 
-  <!-- MODAL DE CARGA Y MENSAJES -->
+  <!-- MODALES -->
   <div id="loading-modal" class="modal-overlay">
-    <div class="modal-content">
-      <div class="spinner"></div>
-      <p id="loading-message">Cargando...</p>
+    <div class="bg-white p-6 rounded-2xl shadow-2xl text-center max-w-sm w-full mx-4">
+      <div class="spinner mb-4"></div>
+      <p id="loading-message" class="text-slate-600 font-medium">Procesando...</p>
     </div>
   </div>
+  
   <div id="message-modal" class="modal-overlay">
-    <div class="modal-content">
-      <h3 id="message-title" class="text-xl font-bold mb-4"></h3>
-      <p id="message-body" class="mb-6"></p>
-      <button id="message-close-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">Cerrar</button>
+    <div class="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-md w-full mx-4">
+      <h3 id="message-title" class="text-xl font-bold mb-2 text-slate-900"></h3>
+      <p id="message-body" class="mb-6 text-slate-600"></p>
+      <button id="message-close-btn" class="bg-brand text-white px-6 py-2 rounded-lg hover:bg-brand-dark transition w-full font-medium">Entendido</button>
     </div>
   </div>
 
-  <!-- ESTRUCTURA HTML PRINCIPAL -->
-  <div class="container mx-auto max-w-4xl p-4">
-    <header class="bg-white shadow-md rounded-lg p-6 mb-6">
-      <h1 class="text-3xl font-bold text-blue-800">Punto Aprobados</h1>
-      <p class="text-gray-600">Repositorio de material de estudio - EII PUCV</p>
-      <nav class="mt-4">
-        <button onclick="window.showPage('page-home')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">Inicio</button>
-        <button onclick="window.showPage('page-upload')" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">Subir Material</button>
+  <div class="container mx-auto max-w-6xl p-4 min-h-screen flex flex-col">
+    
+    <!-- HEADER -->
+    <header class="bg-white shadow-sm rounded-2xl p-6 mb-8 border-t-4 border-brand flex flex-col md:flex-row justify-between items-center gap-6">
+      <div class="text-center md:text-left">
+        <h1 class="text-3xl font-extrabold text-brand tracking-tight">Punto Aprobados</h1>
+        <p class="text-slate-500 text-sm font-medium">Repositorio EII PUCV - Gestión del Conocimiento</p>
+      </div>
+      <nav class="flex gap-3">
+        <button onclick="window.showPage('page-home')" class="px-5 py-2.5 rounded-xl font-semibold text-brand bg-blue-50 hover:bg-blue-100 transition">📚 Biblioteca</button>
+        <button onclick="window.showPage('page-upload')" class="px-5 py-2.5 rounded-xl font-semibold text-white bg-brand hover:bg-brand-dark shadow-md transition flex items-center gap-2"><span>📤</span> Subir</button>
       </nav>
     </header>
 
-    <main id="app-container">
-      <!-- PÁGINA 1: INICIO (Lista de Asignaturas) -->
+    <main id="app-container" class="flex-grow">
+      
+      <!-- HOME -->
       <div id="page-home">
-        <h2 class="text-2xl font-bold mb-4">Asignaturas Disponibles</h2>
-        <div class="mb-4">
-          <input type="text" id="search-bar" placeholder="Buscar asignatura o profesor..." class="w-full p-3 border rounded-lg shadow-sm">
+        <div class="bg-gradient-to-r from-brand to-blue-600 rounded-3xl p-8 mb-8 text-white shadow-lg">
+          <h2 class="text-2xl font-bold mb-2">Encuentra tu material</h2>
+          <p class="mb-6 opacity-90">Busca por asignatura, profesor o autor del apunte.</p>
+          <input type="text" id="search-bar" placeholder="🔎 Escribe aquí (ej: Cálculo, Wilson, Juan Pérez)..." class="w-full p-4 rounded-xl text-slate-800 focus:ring-4 focus:ring-blue-300 outline-none shadow-inner">
         </div>
-        <div id="subjects-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div class="bg-white p-4 rounded-lg shadow-md border border-gray-200">
-            <h3 class="font-bold text-lg text-gray-700">Cargando asignaturas...</h3>
+
+        <div id="subjects-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div class="col-span-full text-center py-10 text-slate-500">
+            <div class="spinner mb-2"></div>Cargando repositorio...
           </div>
         </div>
       </div>
 
-      <!-- PÁGINA 2: SUBIR MATERIAL -->
+      <!-- SUBIR MATERIAL -->
       <div id="page-upload" class="hidden">
-        <h2 class="text-2xl font-bold mb-4">Compartir Material</h2>
-        <form id="upload-form" class="bg-white p-6 rounded-lg shadow-md">
-          <div class="mb-4">
-            <label for="subject" class="block text-sm font-medium text-gray-700 mb-1">Asignatura:</label>
-            <input type="text" id="subject" name="subject" placeholder="Ej: Inferencia Estadística" class="w-full p-2 border rounded-lg" required>
+        <button onclick="window.showPage('page-home')" class="mb-4 text-slate-500 hover:text-brand font-medium flex items-center gap-1">← Volver</button>
+        
+        <div class="bg-white p-8 rounded-3xl shadow-xl max-w-2xl mx-auto border border-slate-100">
+          <div class="border-b pb-4 mb-6">
+            <h2 class="text-2xl font-bold text-slate-800">Subir Aporte</h2>
+            <p class="text-slate-500 text-sm">Ayuda a las futuras generaciones compartiendo tu material.</p>
           </div>
-          <div class="mb-4">
-            <label for="professor" class="block text-sm font-medium text-gray-700 mb-1">Profesor:</label>
-            <input type="text" id="professor" name="professor" placeholder="Ej: Pamela Wilson" class="w-full p-2 border rounded-lg" required>
-          </div>
-          <div class="mb-4">
-            <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Tipo de material:</label>
-            <select id="type" name="type" class="w-full p-2 border rounded-lg" required>
-              <option value="Guia">Guía</option>
-              <option value="Examen">Examen</option>
-              <option value="Apunte">Apunte</option>
-              <option value="Control">Control</option>
-              <option value="Resumen">Resumen</option>
-              <option value="Otro">Otro</option>
-            </select>
-          </div>
-          <div class="mb-4">
-            <label for="file" class="block text-sm font-medium text-gray-700 mb-1">Archivo:</label>
-            <input type="file" id="file" name="file" class="w-full p-2 border rounded-lg" required>
-          </div>
-          <button type="submit" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">Subir Archivo</button>
-        </form>
-      </div>
+          
+          <form id="upload-form" class="space-y-5">
+            <!-- Asignatura con Datalist de la Malla -->
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">Asignatura</label>
+              <input list="subjects-options" name="subject" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand focus:ring-1 focus:ring-brand outline-none" placeholder="Selecciona o escribe..." required>
+              <datalist id="subjects-options">
+                <!-- Año 1 -->
+                <option value="Álgebra Lineal">
+                <option value="Física Mecánica 1">
+                <option value="Fundamentos de Matemáticas">
+                <option value="Introducción al Modelamiento Discreto">
+                <option value="Fundamentos de Ingeniería Industrial">
+                <option value="Fundamentos de Química">
+                <option value="Mundo Contemporáneo">
+                <option value="Cálculo 1">
+                <option value="Introducción a las Tecnologías de la Información">
+                <option value="Taller de Creatividad e Innovación">
+                <!-- Año 2 -->
+                <option value="Física Mecánica 2">
+                <option value="Cálculo 2">
+                <option value="Arquitectura de Sistemas de Software">
+                <option value="Termodinámica">
+                <option value="Física Electromagnetismo">
+                <option value="Cálculo 3">
+                <option value="Operaciones Unitarias">
+                <option value="Ecuaciones Diferenciales">
+                <!-- Año 3 -->
+                <option value="Electrotecnia">
+                <option value="Análisis Económico 1">
+                <option value="Fundamentos de Modelos Probabilísticos">
+                <option value="Inferencia Estadística">
+                <option value="Taller de Comunicación y Negociación">
+                <option value="Optimización Lineal">
+                <option value="Electrónica Industrial">
+                <option value="Análisis Económico 2">
+                <option value="Teoría de Sistemas">
+                <option value="Teoría de la Organización">
+                <option value="Taller de Sistemas Productivos">
+                <!-- Año 4 -->
+                <option value="Investigación de Operaciones">
+                <option value="Gestión Contable y Presupuestaria">
+                <option value="Gestión de Información">
+                <option value="Ética en Ingeniería">
+                <option value="Gestión Comercial">
+                <option value="Evaluación de Proyectos">
+                <option value="Simulación">
+                <option value="Taller de Liderazgo y Trabajo en Equipo">
+                <!-- Año 5 y 6 -->
+                <option value="Planificación de Operaciones">
+                <option value="Ingeniería Financiera">
+                <option value="Modelamiento de Procesos y Sistemas">
+                <option value="Logística Integral">
+                <option value="Gestión de Servicios">
+                <option value="Derecho Empresarial y Ambiental">
+                <option value="Proyecto de Ingeniería Industrial">
+                <option value="Taller de Emprendimiento">
+              </datalist>
+            </div>
 
-      <!-- PÁGINA 3: VISTA DE ASIGNATURA (Lista de Archivos) -->
-      <div id="page-subject" class="hidden">
-        <button onclick="window.showPage('page-home')" class="mb-4 text-blue-600 hover:underline">&larr; Volver a Asignaturas</button>
-        <h2 id="subject-title" class="text-2xl font-bold mb-4"></h2>
-        <div id="subject-files-list" class="space-y-4">
-          <!-- Los archivos se insertarán aquí con JS -->
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">Profesor(a)</label>
+              <input type="text" name="professor" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand outline-none" placeholder="Ej: Pamela Wilson" required>
+            </div>
+
+            <!-- NUEVO CAMPO AUTOR -->
+            <div>
+              <label class="block text-sm font-bold text-slate-700 mb-1">Autor del Apunte <span class="font-normal text-slate-400 text-xs">(Tu nombre)</span></label>
+              <input type="text" name="author" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand outline-none" placeholder="Ej: Juan Pérez (Opcional)">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">Tipo</label>
+                <select name="type" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand outline-none" required>
+                  <option value="Apunte">📝 Apunte</option>
+                  <option value="Guia">📄 Guía</option>
+                  <option value="Examen">🎓 Examen</option>
+                  <option value="Control">⏱️ Control</option>
+                  <option value="Resumen">📌 Resumen</option>
+                  <option value="Libro">📚 Libro</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">Archivo</label>
+                <input type="file" name="file" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-brand hover:file:bg-blue-100" required>
+              </div>
+            </div>
+
+            <button type="submit" class="w-full bg-brand text-white py-3.5 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-brand-dark transform hover:-translate-y-0.5 transition-all">Subir Material 🚀</button>
+          </form>
         </div>
       </div>
+
+      <!-- VISTA ASIGNATURA -->
+      <div id="page-subject" class="hidden">
+        <button onclick="window.showPage('page-home')" class="mb-6 text-slate-500 hover:text-brand font-medium flex items-center gap-1">← Volver a Asignaturas</button>
+        
+        <div class="bg-brand rounded-3xl p-8 mb-8 text-white shadow-lg relative overflow-hidden">
+          <h2 id="subject-title" class="text-3xl font-bold relative z-10"></h2>
+          <p class="text-blue-100 relative z-10 mt-1">Material disponible para descarga inmediata</p>
+          <div class="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-white opacity-10 rounded-full"></div>
+        </div>
+
+        <div id="subject-files-list" class="space-y-3"></div>
+      </div>
+
     </main>
+    
+    <footer class="mt-12 py-6 text-center text-slate-400 text-sm border-t border-slate-200">
+      <p>Punto Aprobados © 2025 • Ingeniería Civil Industrial PUCV</p>
+    </footer>
   </div>
 
-  <!-- JAVASCRIPT Y LÓGICA DE FIREBASE -->
+  <!-- FIREBASE -->
   <script type="module">
-    // 3. Importar Firebase (CORREGIDO: Quitamos setLogLevel)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { 
-      getFirestore, collection, addDoc, onSnapshot, 
-      doc, updateDoc, serverTimestamp, query 
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { 
-      getStorage, ref, uploadBytesResumable, getDownloadURL 
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, serverTimestamp, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-    // --- VARIABLES GLOBALES Y CONFIGURACIÓN ---
-    
-    // =====================================================================
-    // PASO 1: PEGA TU CONFIGURACIÓN DE FIREBASE AQUÍ
-    // Reemplaza esto con el objeto que copiaste de la consola de Firebase
-    // =====================================================================
+    // ==========================================
+    // PASO 1: PEGA TUS LLAVES DE FIREBASE AQUÍ
+    // ==========================================
     const firebaseConfig = {
-  apiKey: "AIzaSyBaItXWTtatnIXt0MSnnWvq3nVAscjdPP8",
-  authDomain: "punto-aprobados.firebaseapp.com",
-  projectId: "punto-aprobados",
-  storageBucket: "punto-aprobados.firebasestorage.app",
-  messagingSenderId: "856568268041",
-  appId: "1:856568268041:web:43f3b44981445157bc3fd8",
-  measurementId: "G-R9359F4FNX"
-};
-    // =====================================================================
-    // FIN DEL PASO 1
-    // =====================================================================
+      apiKey: "TU_API_KEY_AQUI",
+      authDomain: "TU_AUTH_DOMAIN_AQUI",
+      projectId: "TU_PROJECT_ID_AQUI",
+      storageBucket: "TU_STORAGE_BUCKET_AQUI",
+      messagingSenderId: "TU_MESSAGING_SENDER_ID_AQUI",
+      appId: "TU_APP_ID_AQUI"
+    };
+    // ==========================================
 
-    const appId = firebaseConfig.projectId; 
-    
-    // Inicializar Firebase
-    let app, auth, db, storage;
+    let app, auth, db, storage, userId;
+    let allMaterials = [];
+
     try {
       app = initializeApp(firebaseConfig);
       auth = getAuth(app);
       db = getFirestore(app);
       storage = getStorage(app);
-      // CORREGIDO: Eliminamos setLogLevel('Debug') porque rompía la app
-    } catch (e) {
-      console.error("Error inicializando Firebase:", e);
-    }
+    } catch(e) { console.error("Error init:", e); }
 
-    const materialsCollectionPath = `/artifacts/${appId}/public/data/materials`;
-    
-    let userId = null;
-    let allMaterials = [];
-    let unsubscribeMaterials = null;
-
-    // --- MANEJO DE MODALES (Funciones Helper) ---
+    // UI Helpers
     const loadingModal = document.getElementById('loading-modal');
-    const loadingMessage = document.getElementById('loading-message');
-    const messageModal = document.getElementById('message-modal');
-    const messageTitle = document.getElementById('message-title');
-    const messageBody = document.getElementById('message-body');
-    const messageCloseBtn = document.getElementById('message-close-btn');
-
-    function showLoading(message) {
-      loadingMessage.textContent = message;
-      loadingModal.classList.add('flex');
-    }
-    function hideLoading() {
-      loadingModal.classList.remove('flex');
-    }
-    function showMessage(title, body) {
-      messageTitle.textContent = title;
-      messageBody.textContent = body;
-      messageModal.classList.add('flex');
-    }
-    messageCloseBtn.onclick = () => {
-      messageModal.classList.remove('flex');
+    const msgModal = document.getElementById('message-modal');
+    const showLoading = (msg) => { document.getElementById('loading-message').textContent = msg; loadingModal.classList.add('flex'); };
+    const hideLoading = () => loadingModal.classList.remove('flex');
+    const showMsg = (title, body) => {
+      document.getElementById('message-title').textContent = title;
+      document.getElementById('message-body').textContent = body;
+      msgModal.classList.add('flex');
     };
+    document.getElementById('message-close-btn').onclick = () => msgModal.classList.remove('flex');
 
-    // --- LÓGICA PRINCIPAL DE DATOS ---
-
-    function listenForMaterials() {
-      if (unsubscribeMaterials) unsubscribeMaterials();
-
-      // Referencia directa a la colección raíz (más simple)
-      const q = query(collection(db, "materiales_app")); 
-      
-      unsubscribeMaterials = onSnapshot(q, (querySnapshot) => {
+    // CORE LOGIC
+    function listenData() {
+      onSnapshot(query(collection(db, "materiales_app")), (snapshot) => {
         allMaterials = [];
-        querySnapshot.forEach((doc) => {
-          allMaterials.push({ id: doc.id, ...doc.data() });
-        });
-        renderHomePage(document.getElementById('search-bar').value);
-        hideLoading();
-      }, (error) => {
-        console.error("Error al obtener materiales: ", error);
-        // Si falla la lectura (permisos), ocultamos el loading
+        snapshot.forEach(doc => allMaterials.push({id: doc.id, ...doc.data()}));
+        renderHome(document.getElementById('search-bar').value);
         hideLoading();
       });
     }
 
-    function renderHomePage(filter = '') {
-      const listEl = document.getElementById('subjects-list');
-      const subjectsMap = new Map();
-      const normalizedFilter = filter.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    function renderHome(filter = '') {
+      const list = document.getElementById('subjects-list');
+      const map = new Map();
+      const cleanFilter = filter.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-      allMaterials.forEach(material => {
-        const subjectName = material.subject || 'Sin Asignatura';
-        const professorName = material.professor || '';
-        const subjectText = subjectName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        const professorText = professorName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      allMaterials.forEach(m => {
+        const subj = m.subject || 'Otros';
+        // Búsqueda inteligente: incluye autor y profesor
+        const meta = `${subj} ${m.professor} ${m.author || ''}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        
+        if (filter && !meta.includes(cleanFilter)) return;
 
-        if (filter && !subjectText.includes(normalizedFilter) && !professorText.includes(normalizedFilter)) {
-          return;
-        }
-        if (!subjectsMap.has(subjectName)) {
-          subjectsMap.set(subjectName, { files: [], professors: new Set() });
-        }
-        subjectsMap.get(subjectName).files.push(material);
-        if(material.professor) {
-          subjectsMap.get(subjectName).professors.add(material.professor);
-        }
+        if (!map.has(subj)) map.set(subj, { count: 0, profs: new Set() });
+        const entry = map.get(subj);
+        entry.count++;
+        if (m.professor) entry.profs.add(m.professor);
       });
 
-      listEl.innerHTML = '';
-      
-      if (subjectsMap.size === 0) {
-        if (allMaterials.length === 0) {
-             listEl.innerHTML = `<p class="text-gray-600 col-span-full text-center py-8">No hay materiales aún. ¡Sé el primero en subir uno!</p>`;
-        } else {
-             listEl.innerHTML = `<p class="text-gray-600 col-span-full text-center py-8">No se encontraron resultados para tu búsqueda.</p>`;
-        }
+      list.innerHTML = '';
+      if (map.size === 0) {
+        list.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400">No se encontraron resultados.</div>`;
         return;
       }
 
-      const sortedSubjects = new Map([...subjectsMap.entries()].sort());
-      sortedSubjects.forEach((data, subjectName) => {
+      [...map.entries()].sort().forEach(([subj, data]) => {
         const card = document.createElement('div');
-        card.className = 'bg-white p-6 rounded-lg shadow-md cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-blue-500';
-        const professors = [...data.professors].join(', ');
+        card.className = 'bg-white p-6 rounded-2xl shadow-sm border border-slate-100 cursor-pointer card-hover group';
         card.innerHTML = `
-          <h3 class="text-xl font-bold text-blue-800">${subjectName}</h3>
-          <div class="flex justify-between items-center mt-2">
-            <span class="text-sm bg-blue-100 text-blue-800 py-1 px-2 rounded-full">${data.files.length} archivo(s)</span>
+          <div class="flex justify-between items-start mb-3">
+            <div class="p-3 bg-blue-50 rounded-xl text-brand text-xl">📚</div>
+            <span class="bg-slate-100 text-slate-600 text-xs font-bold px-2 py-1 rounded-lg">${data.count} Docs</span>
           </div>
-          ${professors ? `<p class="text-gray-600 text-sm mt-3 font-medium truncate border-t pt-2" title="${professors}">Prof.: ${professors}</p>` : ''}
+          <h3 class="font-bold text-slate-800 text-lg group-hover:text-brand transition">${subj}</h3>
+          <p class="text-sm text-slate-500 mt-2 truncate">Prof: ${[...data.profs].join(', ') || 'Varios'}</p>
         `;
-        card.onclick = () => showSubjectPage(subjectName);
-        listEl.appendChild(card);
+        card.onclick = () => showSubjectPage(subj);
+        list.appendChild(card);
       });
     }
 
-    function showSubjectPage(subjectName) {
+    function showSubjectPage(subj) {
       window.showPage('page-subject');
-      document.getElementById('subject-title').textContent = subjectName;
-      const listEl = document.getElementById('subject-files-list');
-      listEl.innerHTML = '';
+      document.getElementById('subject-title').textContent = subj;
+      const list = document.getElementById('subject-files-list');
+      list.innerHTML = '';
 
-      const files = allMaterials.filter(m => m.subject === subjectName);
-
-      files.forEach(file => {
-        const fileCard = document.createElement('div');
-        fileCard.className = 'bg-white p-4 rounded-lg shadow-sm border flex flex-col md:flex-row justify-between items-start md:items-center gap-4';
+      const files = allMaterials.filter(m => m.subject === subj);
+      
+      files.forEach(f => {
+        const row = document.createElement('div');
+        row.className = 'bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4';
         
-        fileCard.innerHTML = `
-          <div>
-            <h4 class="text-lg font-bold text-gray-800">${file.fileName || 'Archivo sin nombre'}</h4>
-            <div class="flex gap-2 mt-1 text-sm text-gray-600">
-                <span class="bg-gray-100 px-2 py-0.5 rounded border">${file.type}</span>
-                <span>Prof: ${file.professor || 'No especificado'}</span>
+        let icon = '📄';
+        if(f.type === 'Examen') icon = '🎓';
+        if(f.type === 'Control') icon = '⏱️';
+
+        row.innerHTML = `
+          <div class="flex-grow w-full md:w-auto">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl">${icon}</span>
+              <div>
+                <h4 class="font-bold text-slate-800">${f.fileName}</h4>
+                <div class="flex flex-wrap gap-3 text-xs text-slate-500 mt-1">
+                  <span class="bg-slate-100 px-2 py-0.5 rounded">🏷️ ${f.type}</span>
+                  <span>👨‍🏫 ${f.professor}</span>
+                  <span class="text-brand font-medium">👤 Por: ${f.author || 'Anónimo'}</span>
+                </div>
+              </div>
             </div>
           </div>
-          <a href="${file.downloadURL}" target="_blank" download="${file.fileName}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
-            <span>Descargar</span>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-          </a>
+          <a href="${f.downloadURL}" target="_blank" class="w-full md:w-auto text-center bg-white border-2 border-brand text-brand hover:bg-brand hover:text-white px-6 py-2 rounded-lg font-bold transition">Descargar</a>
         `;
-        listEl.appendChild(fileCard);
+        list.appendChild(row);
       });
     }
 
     async function handleUpload(e) {
       e.preventDefault();
-      const form = e.target;
-      const file = form.file.files[0];
-      const subject = form.subject.value.trim();
-      const professor = form.professor.value.trim();
-      const type = form.type.value;
-
-      if (!file || !subject || !professor) {
-        showMessage("Error", "Por favor, completa todos los campos.");
-        return;
-      }
-
-      showLoading("Subiendo archivo...");
-
-      let newDocRef;
-      try {
-        const docData = {
-          subject: subject,
-          professor: professor,
-          type: type,
-          fileName: file.name,
-          createdAt: serverTimestamp(),
-          uploadedBy: userId,
-          downloadURL: '',
-          ratings: []
-        };
-        // Usamos la colección 'materiales_app'
-        newDocRef = await addDoc(collection(db, "materiales_app"), docData);
-      } catch (error) {
-        console.error("Error al crear documento: ", error);
-        showMessage("Error", "No se pudo crear el registro. Verifica tu conexión.");
-        hideLoading();
-        return;
-      }
+      const f = e.target;
+      const file = f.file.files[0];
       
+      if (!file) return showMsg("Error", "Falta el archivo");
+
+      showLoading("Subiendo...");
       try {
-        const storageRef = ref(storage, `materiales_app/${newDocRef.id}/${file.name}`);
-        const uploadTask = uploadBytesResumable(storageRef, file);
+        const docRef = await addDoc(collection(db, "materiales_app"), {
+          subject: f.subject.value.trim(),
+          professor: f.professor.value.trim(),
+          author: f.author.value.trim() || 'Anónimo', // Guardamos el autor
+          type: f.type.value,
+          fileName: file.name,
+          uploadedBy: userId,
+          createdAt: serverTimestamp(),
+          downloadURL: ''
+        });
 
-        uploadTask.on('state_changed', 
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            showLoading(`Subiendo: ${Math.round(progress)}%`);
-          }, 
-          (error) => {
-            console.error("Error al subir archivo: ", error);
-            if (error.code === 'storage/unauthorized') {
-                 showMessage("Error de Permisos", "No tienes permiso para subir archivos. Verifica las reglas de Firebase Storage.");
-            } else {
-                 showMessage("Error", "Falló la subida del archivo. Intenta de nuevo.");
-            }
-            hideLoading();
-          }, 
+        const upTask = uploadBytesResumable(ref(storage, `materiales_app/${docRef.id}/${file.name}`), file);
+        
+        upTask.on('state_changed', null, 
+          (err) => { console.error(err); hideLoading(); showMsg("Error", "Falló la subida"); },
           async () => {
-            showLoading("Finalizando...");
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-            
-            await updateDoc(newDocRef, {
-              downloadURL: downloadURL
-            });
-
+            const url = await getDownloadURL(upTask.snapshot.ref);
+            await updateDoc(docRef, { downloadURL: url });
             hideLoading();
-            showMessage("¡Éxito!", "Material subido correctamente. ¡Gracias por aportar!");
-            form.reset();
+            showMsg("¡Éxito!", "Material publicado correctamente.");
+            f.reset();
             window.showPage('page-home');
           }
         );
-      } catch (error) {
-        console.error("Error en el proceso de subida: ", error);
-        showMessage("Error", "Ocurrió un error inesperado.");
-        hideLoading();
-      }
+      } catch (err) { console.error(err); hideLoading(); showMsg("Error", "Ocurrió un error."); }
     }
 
-    // --- INICIALIZACIÓN ---
-
+    // Init
     document.getElementById('upload-form').onsubmit = handleUpload;
-    document.getElementById('search-bar').onkeyup = (e) => {
-      renderHomePage(e.target.value);
-    };
-
+    document.getElementById('search-bar').onkeyup = (e) => renderHome(e.target.value);
+    
     window.addEventListener('DOMContentLoaded', () => {
-      showLoading("Conectando...");
-      
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          userId = user.uid;
-          console.log("Usuario conectado:", userId);
-          listenForMaterials();
-        } else {
-          signInAnonymously(auth).catch((error) => {
-            console.error("Error auth anónima:", error);
-            showMessage("Error de Acceso", "No se pudo conectar al sistema.");
-            hideLoading();
-          });
-        }
+      showLoading("Iniciando...");
+      onAuthStateChanged(auth, (u) => {
+        if (u) { userId = u.uid; listenData(); }
+        else signInAnonymously(auth).catch(e => console.error(e));
       });
     });
-
   </script>
-
 </body>
 </html>
