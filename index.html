@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Punto Aprobados - EII PUCV</title>
+  <title>Punto Aprobados - ICI PUCV</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -13,7 +13,7 @@
         extend: {
           fontFamily: { sans: ['Inter', 'sans-serif'] },
           colors: {
-            brand: { light: '#4da6ff', DEFAULT: '#004481', dark: '#002a50' } // Azul más institucional
+            brand: { light: '#4da6ff', DEFAULT: '#004481', dark: '#002a50' }
           }
         },
       },
@@ -25,15 +25,13 @@
     .modal-overlay { display: none; position: fixed; z-index: 50; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; backdrop-filter: blur(3px); }
     .modal-overlay.flex { display: flex; }
     .card-hover:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-    
-    /* Spinner */
     .spinner { border: 4px solid #e2e8f0; border-top: 4px solid #004481; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 
   <script>
     window.showPage = function(pageId) {
-      ['page-home', 'page-upload', 'page-subject'].forEach(page => {
+      ['page-login', 'page-home', 'page-upload', 'page-subject'].forEach(page => {
         const el = document.getElementById(page);
         if (el) el.classList.toggle('hidden', page !== pageId);
       });
@@ -61,169 +59,120 @@
 
   <div class="container mx-auto max-w-6xl p-4 min-h-screen flex flex-col">
     
-    <!-- HEADER -->
-    <header class="bg-white shadow-sm rounded-2xl p-6 mb-8 border-t-4 border-brand flex flex-col md:flex-row justify-between items-center gap-6">
-      <div class="text-center md:text-left">
-        <h1 class="text-3xl font-extrabold text-brand tracking-tight">Punto Aprobados</h1>
-        <p class="text-slate-500 text-sm font-medium">Repositorio EII PUCV - Gestión del Conocimiento</p>
+    <!-- VISTA LOGIN -->
+    <div id="page-login" class="flex flex-col items-center justify-center min-h-[80vh]">
+      <div class="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-md w-full border border-slate-100">
+        <div class="mb-6 bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-4xl">🎓</div>
+        <h1 class="text-3xl font-extrabold text-brand mb-2">Punto Aprobados</h1>
+        <p class="text-slate-500 mb-8">Repositorio exclusivo para estudiantes de Ingeniería Civil Industrial PUCV.</p>
+        
+        <div class="space-y-4">
+          <button id="btn-login-google" class="w-full flex items-center justify-center gap-3 bg-white border-2 border-slate-200 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-50 hover:border-brand transition-all shadow-sm">
+            <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6" alt="Google">
+            Ingresar con correo PUCV
+          </button>
+          <p class="text-xs text-slate-400 mt-4">Solo se permite acceso a cuentas @mail.pucv.cl</p>
+        </div>
       </div>
-      <nav class="flex gap-3">
-        <button onclick="window.showPage('page-home')" class="px-5 py-2.5 rounded-xl font-semibold text-brand bg-blue-50 hover:bg-blue-100 transition">📚 Biblioteca</button>
-        <button onclick="window.showPage('page-upload')" class="px-5 py-2.5 rounded-xl font-semibold text-white bg-brand hover:bg-brand-dark shadow-md transition flex items-center gap-2"><span>📤</span> Subir</button>
-      </nav>
-    </header>
+    </div>
 
-    <main id="app-container" class="flex-grow">
+    <!-- INTERFAZ PRINCIPAL -->
+    <div id="main-interface" class="hidden flex-grow flex flex-col">
       
-      <!-- HOME -->
-      <div id="page-home">
-        <div class="bg-gradient-to-r from-brand to-blue-600 rounded-3xl p-8 mb-8 text-white shadow-lg">
-          <h2 class="text-2xl font-bold mb-2">Encuentra tu material</h2>
-          <p class="mb-6 opacity-90">Busca por asignatura, profesor o autor del apunte.</p>
-          <input type="text" id="search-bar" placeholder="🔎 Escribe aquí (ej: Cálculo, Wilson, Juan Pérez)..." class="w-full p-4 rounded-xl text-slate-800 focus:ring-4 focus:ring-blue-300 outline-none shadow-inner">
+      <!-- HEADER -->
+      <header class="bg-white shadow-sm rounded-2xl p-6 mb-8 border-t-4 border-brand flex flex-col md:flex-row justify-between items-center gap-6">
+        <div class="text-center md:text-left">
+          <h1 class="text-3xl font-extrabold text-brand tracking-tight">Punto Aprobados</h1>
+          <p id="user-welcome" class="text-slate-500 text-sm font-medium">Bienvenido estudiante</p>
+        </div>
+        <nav class="flex gap-3">
+          <button onclick="window.showPage('page-home')" class="px-5 py-2.5 rounded-xl font-semibold text-brand bg-blue-50 hover:bg-blue-100 transition">📚 Biblioteca</button>
+          <button onclick="window.showPage('page-upload')" class="px-5 py-2.5 rounded-xl font-semibold text-white bg-brand hover:bg-brand-dark shadow-md transition flex items-center gap-2"><span>📤</span> Subir</button>
+          <button id="btn-logout" class="px-4 py-2.5 rounded-xl font-semibold text-slate-500 hover:text-red-500 hover:bg-red-50 transition border border-transparent hover:border-red-100">Salir</button>
+        </nav>
+      </header>
+
+      <main class="flex-grow">
+        <!-- HOME -->
+        <div id="page-home">
+          <div class="bg-gradient-to-r from-brand to-blue-600 rounded-3xl p-8 mb-8 text-white shadow-lg">
+            <h2 class="text-2xl font-bold mb-2">Encuentra tu material</h2>
+            <input type="text" id="search-bar" placeholder="🔎 Escribe aquí (ej: Cálculo, Wilson)..." class="w-full p-4 rounded-xl text-slate-800 focus:ring-4 focus:ring-blue-300 outline-none shadow-inner mt-4">
+          </div>
+          <div id="subjects-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
         </div>
 
-        <div id="subjects-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          <div class="col-span-full text-center py-10 text-slate-500">
-            <div class="spinner mb-2"></div>Cargando repositorio...
-          </div>
-        </div>
-      </div>
-
-      <!-- SUBIR MATERIAL -->
-      <div id="page-upload" class="hidden">
-        <button onclick="window.showPage('page-home')" class="mb-4 text-slate-500 hover:text-brand font-medium flex items-center gap-1">← Volver</button>
-        
-        <div class="bg-white p-8 rounded-3xl shadow-xl max-w-2xl mx-auto border border-slate-100">
-          <div class="border-b pb-4 mb-6">
-            <h2 class="text-2xl font-bold text-slate-800">Subir Aporte</h2>
-            <p class="text-slate-500 text-sm">Ayuda a las futuras generaciones compartiendo tu material.</p>
-          </div>
-          
-          <form id="upload-form" class="space-y-5">
-            <!-- Asignatura con Datalist de la Malla -->
-            <div>
-              <label class="block text-sm font-bold text-slate-700 mb-1">Asignatura</label>
-              <input list="subjects-options" name="subject" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand focus:ring-1 focus:ring-brand outline-none" placeholder="Selecciona o escribe..." required>
-              <datalist id="subjects-options">
-                <!-- Año 1 -->
-                <option value="Álgebra Lineal">
-                <option value="Física Mecánica 1">
-                <option value="Fundamentos de Matemáticas">
-                <option value="Introducción al Modelamiento Discreto">
-                <option value="Fundamentos de Ingeniería Industrial">
-                <option value="Fundamentos de Química">
-                <option value="Mundo Contemporáneo">
-                <option value="Cálculo 1">
-                <option value="Introducción a las Tecnologías de la Información">
-                <option value="Taller de Creatividad e Innovación">
-                <!-- Año 2 -->
-                <option value="Física Mecánica 2">
-                <option value="Cálculo 2">
-                <option value="Arquitectura de Sistemas de Software">
-                <option value="Termodinámica">
-                <option value="Física Electromagnetismo">
-                <option value="Cálculo 3">
-                <option value="Operaciones Unitarias">
-                <option value="Ecuaciones Diferenciales">
-                <!-- Año 3 -->
-                <option value="Electrotecnia">
-                <option value="Análisis Económico 1">
-                <option value="Fundamentos de Modelos Probabilísticos">
-                <option value="Inferencia Estadística">
-                <option value="Taller de Comunicación y Negociación">
-                <option value="Optimización Lineal">
-                <option value="Electrónica Industrial">
-                <option value="Análisis Económico 2">
-                <option value="Teoría de Sistemas">
-                <option value="Teoría de la Organización">
-                <option value="Taller de Sistemas Productivos">
-                <!-- Año 4 -->
-                <option value="Investigación de Operaciones">
-                <option value="Gestión Contable y Presupuestaria">
-                <option value="Gestión de Información">
-                <option value="Ética en Ingeniería">
-                <option value="Gestión Comercial">
-                <option value="Evaluación de Proyectos">
-                <option value="Simulación">
-                <option value="Taller de Liderazgo y Trabajo en Equipo">
-                <!-- Año 5 y 6 -->
-                <option value="Planificación de Operaciones">
-                <option value="Ingeniería Financiera">
-                <option value="Modelamiento de Procesos y Sistemas">
-                <option value="Logística Integral">
-                <option value="Gestión de Servicios">
-                <option value="Derecho Empresarial y Ambiental">
-                <option value="Proyecto de Ingeniería Industrial">
-                <option value="Taller de Emprendimiento">
-              </datalist>
-            </div>
-
-            <div>
-              <label class="block text-sm font-bold text-slate-700 mb-1">Profesor(a)</label>
-              <input type="text" name="professor" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand outline-none" placeholder="Ej: Pamela Wilson" required>
-            </div>
-
-            <!-- NUEVO CAMPO AUTOR -->
-            <div>
-              <label class="block text-sm font-bold text-slate-700 mb-1">Autor del Apunte <span class="font-normal text-slate-400 text-xs">(Tu nombre)</span></label>
-              <input type="text" name="author" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand outline-none" placeholder="Ej: Juan Pérez (Opcional)">
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
+        <!-- SUBIR MATERIAL -->
+        <div id="page-upload" class="hidden">
+          <button onclick="window.showPage('page-home')" class="mb-4 text-slate-500 hover:text-brand font-medium flex items-center gap-1">← Volver</button>
+          <div class="bg-white p-8 rounded-3xl shadow-xl max-w-2xl mx-auto border border-slate-100">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6">Subir Aporte</h2>
+            <form id="upload-form" class="space-y-5">
               <div>
-                <label class="block text-sm font-bold text-slate-700 mb-1">Tipo</label>
-                <select name="type" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand outline-none" required>
-                  <option value="Apunte">📝 Apunte</option>
-                  <option value="Guia">📄 Guía</option>
-                  <option value="Examen">🎓 Examen</option>
-                  <option value="Control">⏱️ Control</option>
-                  <option value="Resumen">📌 Resumen</option>
-                  <option value="Libro">📚 Libro</option>
-                </select>
+                <label class="block text-sm font-bold text-slate-700 mb-1">Asignatura</label>
+                <input list="subjects-options" name="subject" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand outline-none" placeholder="Selecciona o escribe..." required>
+                <datalist id="subjects-options">
+                  <!-- LISTA DE ASIGNATURAS ICI PUCV -->
+                  <option value="Álgebra Lineal"><option value="Física Mecánica 1"><option value="Fundamentos de Matemáticas"><option value="Introducción al Modelamiento Discreto"><option value="Fundamentos de Ingeniería Industrial"><option value="Fundamentos de Química"><option value="Mundo Contemporáneo"><option value="Cálculo 1"><option value="Introducción a las Tecnologías de la Información"><option value="Taller de Creatividad e Innovación"><option value="Física Mecánica 2"><option value="Cálculo 2"><option value="Arquitectura de Sistemas de Software"><option value="Termodinámica"><option value="Física Electromagnetismo"><option value="Cálculo 3"><option value="Operaciones Unitarias"><option value="Ecuaciones Diferenciales"><option value="Electrotecnia"><option value="Análisis Económico 1"><option value="Fundamentos de Modelos Probabilísticos"><option value="Inferencia Estadística"><option value="Taller de Comunicación y Negociación"><option value="Optimización Lineal"><option value="Electrónica Industrial"><option value="Análisis Económico 2"><option value="Teoría de Sistemas"><option value="Teoría de la Organización"><option value="Taller de Sistemas Productivos"><option value="Investigación de Operaciones"><option value="Gestión Contable y Presupuestaria"><option value="Gestión de Información"><option value="Ética en Ingeniería"><option value="Gestión Comercial"><option value="Evaluación de Proyectos"><option value="Simulación"><option value="Taller de Liderazgo y Trabajo en Equipo"><option value="Planificación de Operaciones"><option value="Ingeniería Financiera"><option value="Modelamiento de Procesos y Sistemas"><option value="Logística Integral"><option value="Gestión de Servicios"><option value="Derecho Empresarial y Ambiental"><option value="Proyecto de Ingeniería Industrial"><option value="Taller de Emprendimiento">
+                </datalist>
               </div>
               <div>
-                <label class="block text-sm font-bold text-slate-700 mb-1">Archivo</label>
-                <input type="file" name="file" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-brand hover:file:bg-blue-100" required>
+                <label class="block text-sm font-bold text-slate-700 mb-1">Profesor(a)</label>
+                <input type="text" name="professor" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" required>
               </div>
-            </div>
+              
+              <!-- CAMPO AUTOR EDITABLE -->
+              <div>
+                <label class="block text-sm font-bold text-slate-700 mb-1">Autor del Material</label>
+                <input type="text" name="author" id="input-author" class="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:border-brand transition-colors" placeholder="Ej: Tu nombre, o el del Profesor">
+                <p class="text-xs text-slate-400 mt-1">Por defecto aparecerá tu nombre, pero puedes cambiarlo si el material es de otra persona.</p>
+              </div>
 
-            <button type="submit" class="w-full bg-brand text-white py-3.5 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-brand-dark transform hover:-translate-y-0.5 transition-all">Subir Material 🚀</button>
-          </form>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-bold text-slate-700 mb-1">Tipo</label>
+                  <select name="type" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" required>
+                    <option value="Apunte">📝 Apunte</option><option value="Guia">📄 Guía</option><option value="Examen">🎓 Examen</option><option value="Control">⏱️ Control</option><option value="Resumen">📌 Resumen</option><option value="Libro">📚 Libro</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-bold text-slate-700 mb-1">Archivo</label>
+                  <input type="file" name="file" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:bg-blue-50 file:text-brand" required>
+                </div>
+              </div>
+              <button type="submit" class="w-full bg-brand text-white py-3.5 rounded-xl font-bold hover:bg-brand-dark transition-all">Subir Material 🚀</button>
+            </form>
+          </div>
         </div>
-      </div>
 
-      <!-- VISTA ASIGNATURA -->
-      <div id="page-subject" class="hidden">
-        <button onclick="window.showPage('page-home')" class="mb-6 text-slate-500 hover:text-brand font-medium flex items-center gap-1">← Volver a Asignaturas</button>
-        
-        <div class="bg-brand rounded-3xl p-8 mb-8 text-white shadow-lg relative overflow-hidden">
-          <h2 id="subject-title" class="text-3xl font-bold relative z-10"></h2>
-          <p class="text-blue-100 relative z-10 mt-1">Material disponible para descarga inmediata</p>
-          <div class="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-white opacity-10 rounded-full"></div>
+        <!-- VISTA ASIGNATURA -->
+        <div id="page-subject" class="hidden">
+          <button onclick="window.showPage('page-home')" class="mb-6 text-slate-500 hover:text-brand font-medium flex items-center gap-1">← Volver</button>
+          <div class="bg-brand rounded-3xl p-8 mb-8 text-white shadow-lg">
+            <h2 id="subject-title" class="text-3xl font-bold"></h2>
+            <p class="text-blue-100 mt-1">Material disponible</p>
+          </div>
+          <div id="subject-files-list" class="space-y-3"></div>
         </div>
-
-        <div id="subject-files-list" class="space-y-3"></div>
-      </div>
-
-    </main>
-    
-    <footer class="mt-12 py-6 text-center text-slate-400 text-sm border-t border-slate-200">
-      <p>Punto Aprobados © 2025 • Ingeniería Civil Industrial PUCV</p>
-    </footer>
+      </main>
+      
+      <footer class="mt-12 py-6 text-center text-slate-400 text-sm border-t border-slate-200">
+        <p>Punto Aprobados © 2025 • Ingeniería Civil Industrial PUCV</p>
+      </footer>
+    </div>
   </div>
 
   <!-- FIREBASE -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, serverTimestamp, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
     // ==========================================
     // PASO 1: PEGA TUS LLAVES DE FIREBASE AQUÍ
     // ==========================================
-const firebaseConfig = {
+    const firebaseConfig = {
   apiKey: "AIzaSyBaItXWTtatnIXt0MSnnWvq3nVAscjdPP8",
   authDomain: "punto-aprobados.firebaseapp.com",
   projectId: "punto-aprobados",
@@ -231,10 +180,9 @@ const firebaseConfig = {
   messagingSenderId: "856568268041",
   appId: "1:856568268041:web:43f3b44981445157bc3fd8",
   measurementId: "G-R9359F4FNX"
-};
-    // ==========================================
+};    // ==========================================
 
-    let app, auth, db, storage, userId;
+    let app, auth, db, storage, currentUser;
     let allMaterials = [];
 
     try {
@@ -256,13 +204,53 @@ const firebaseConfig = {
     };
     document.getElementById('message-close-btn').onclick = () => msgModal.classList.remove('flex');
 
-    // CORE LOGIC
+    // --- AUTH ---
+    const provider = new GoogleAuthProvider();
+
+    document.getElementById('btn-login-google').onclick = async () => {
+      try { await signInWithPopup(auth, provider); }
+      catch (error) { console.error("Error login:", error); showMsg("Error", "No se pudo iniciar sesión."); }
+    };
+
+    document.getElementById('btn-logout').onclick = () => {
+      signOut(auth);
+      window.location.reload();
+    };
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const email = user.email || "";
+        // VALIDACIÓN CLIENTE (Visual)
+        if (!email.endsWith("@mail.pucv.cl") && !email.endsWith("@pucv.cl")) {
+          signOut(auth);
+          showMsg("Acceso Restringido 🔒", "Lo sentimos, esta plataforma es exclusiva para estudiantes PUCV (@mail.pucv.cl).");
+          return;
+        }
+
+        currentUser = user;
+        document.getElementById('page-login').classList.add('hidden');
+        document.getElementById('main-interface').classList.remove('hidden');
+        document.getElementById('user-welcome').textContent = `Hola, ${user.displayName.split(" ")[0]}`;
+        
+        // Pre-llenar autor pero permitir edición
+        const inputAuthor = document.getElementById('input-author');
+        if(!inputAuthor.value) {
+            inputAuthor.value = user.displayName;
+        }
+
+        listenData();
+      } else {
+        document.getElementById('page-login').classList.remove('hidden');
+        document.getElementById('main-interface').classList.add('hidden');
+      }
+    });
+
+    // --- DATA ---
     function listenData() {
       onSnapshot(query(collection(db, "materiales_app")), (snapshot) => {
         allMaterials = [];
         snapshot.forEach(doc => allMaterials.push({id: doc.id, ...doc.data()}));
         renderHome(document.getElementById('search-bar').value);
-        hideLoading();
       });
     }
 
@@ -273,7 +261,6 @@ const firebaseConfig = {
 
       allMaterials.forEach(m => {
         const subj = m.subject || 'Otros';
-        // Búsqueda inteligente: incluye autor y profesor
         const meta = `${subj} ${m.professor} ${m.author || ''}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         
         if (filter && !meta.includes(cleanFilter)) return;
@@ -313,6 +300,7 @@ const firebaseConfig = {
       list.innerHTML = '';
 
       const files = allMaterials.filter(m => m.subject === subj);
+      files.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       
       files.forEach(f => {
         const row = document.createElement('div');
@@ -331,7 +319,7 @@ const firebaseConfig = {
                 <div class="flex flex-wrap gap-3 text-xs text-slate-500 mt-1">
                   <span class="bg-slate-100 px-2 py-0.5 rounded">🏷️ ${f.type}</span>
                   <span>👨‍🏫 ${f.professor}</span>
-                  <span class="text-brand font-medium">👤 Por: ${f.author || 'Anónimo'}</span>
+                  <span class="text-brand font-medium">👤 ${f.author || 'Anónimo'}</span>
                 </div>
               </div>
             </div>
@@ -351,13 +339,16 @@ const firebaseConfig = {
 
       showLoading("Subiendo...");
       try {
+        const finalAuthorName = f.author.value.trim() || currentUser.displayName || 'Anónimo';
+
         const docRef = await addDoc(collection(db, "materiales_app"), {
           subject: f.subject.value.trim(),
           professor: f.professor.value.trim(),
-          author: f.author.value.trim() || 'Anónimo', // Guardamos el autor
+          author: finalAuthorName, // Nombre visible (Editable)
           type: f.type.value,
           fileName: file.name,
-          uploadedBy: userId,
+          uploadedBy: currentUser.uid, // Seguridad interna
+          uploadedByEmail: currentUser.email, // Seguridad interna
           createdAt: serverTimestamp(),
           downloadURL: ''
         });
@@ -365,31 +356,22 @@ const firebaseConfig = {
         const upTask = uploadBytesResumable(ref(storage, `materiales_app/${docRef.id}/${file.name}`), file);
         
         upTask.on('state_changed', null, 
-          (err) => { console.error(err); hideLoading(); showMsg("Error", "Falló la subida"); },
+          (err) => { console.error(err); hideLoading(); showMsg("Error", "Falló la subida (¿Permisos?)"); },
           async () => {
             const url = await getDownloadURL(upTask.snapshot.ref);
             await updateDoc(docRef, { downloadURL: url });
             hideLoading();
             showMsg("¡Éxito!", "Material publicado correctamente.");
             f.reset();
+            document.getElementById('input-author').value = currentUser.displayName;
             window.showPage('page-home');
           }
         );
       } catch (err) { console.error(err); hideLoading(); showMsg("Error", "Ocurrió un error."); }
     }
 
-    // Init
     document.getElementById('upload-form').onsubmit = handleUpload;
     document.getElementById('search-bar').onkeyup = (e) => renderHome(e.target.value);
-    
-    window.addEventListener('DOMContentLoaded', () => {
-      showLoading("Iniciando...");
-      onAuthStateChanged(auth, (u) => {
-        if (u) { userId = u.uid; listenData(); }
-        else signInAnonymously(auth).catch(e => console.error(e));
-      });
-    });
   </script>
 </body>
 </html>
-
