@@ -30,8 +30,10 @@
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
     /* Estilos para las estrellas */
-    .star-rating button { color: #d1d5db; transition: color 0.2s; }
-    .star-rating button:hover, .star-rating button.active { color: #fbbf24; }
+    .star-rating button { color: #d1d5db; transition: transform 0.1s, color 0.2s; }
+    .star-rating button:hover { transform: scale(1.2); }
+    /* Cursor pointer forzado para asegurar clickabilidad */
+    .star-btn { cursor: pointer !important; }
   </style>
 
   <script>
@@ -40,7 +42,7 @@
         const el = document.getElementById(page);
         if (el) el.classList.toggle('hidden', page !== pageId);
       });
-      window.scrollTo(0, 0);
+      if(pageId === 'page-home') window.scrollTo(0, 0);
     };
   </script>
 </head>
@@ -173,19 +175,20 @@
     // ==========================================
     // PASO 1: PEGA TUS LLAVES AQUI
     // ==========================================
-       const firebaseConfig = {
-  apiKey: "AIzaSyBaItXWTtatnIXt0MSnnWvq3nVAscjdPP8",
-  authDomain: "punto-aprobados.firebaseapp.com",
-  projectId: "punto-aprobados",
-  storageBucket: "punto-aprobados.firebasestorage.app",
-  messagingSenderId: "856568268041",
-  appId: "1:856568268041:web:43f3b44981445157bc3fd8",
-  measurementId: "G-R9359F4FNX"
-}; 
+    const firebaseConfig = {
+      apiKey: "AIzaSyBaItXWTtatnIXt0MSnnWvq3nVAscjdPP8",
+      authDomain: "punto-aprobados.firebaseapp.com",
+      projectId: "punto-aprobados",
+      storageBucket: "punto-aprobados.firebasestorage.app",
+      messagingSenderId: "856568268041",
+      appId: "1:856568268041:web:43f3b44981445157bc3fd8",
+      measurementId: "G-R9359F4FNX"
+    };
     // ==========================================
 
     let app, auth, db, storage, currentUser;
     let allMaterials = [];
+    let currentSubjectName = null; // Variable para saber qué estamos viendo
 
     try {
       app = initializeApp(firebaseConfig);
@@ -242,7 +245,14 @@
       onSnapshot(query(collection(db, "materiales_app")), (snapshot) => {
         allMaterials = [];
         snapshot.forEach(doc => allMaterials.push({id: doc.id, ...doc.data()}));
+        
+        // Renderizamos Home
         renderHome(document.getElementById('search-bar').value);
+        
+        // CRUCIAL: Si el usuario está viendo una asignatura, refrescamos esa vista también
+        if(currentSubjectName && !document.getElementById('page-subject').classList.contains('hidden')) {
+            showSubjectPage(currentSubjectName);
+        }
       });
     }
 
@@ -284,6 +294,7 @@
     }
 
     function showSubjectPage(subj) {
+      currentSubjectName = subj; // Guardamos dónde estamos
       window.showPage('page-subject');
       document.getElementById('subject-title').textContent = subj;
       const list = document.getElementById('subject-files-list');
@@ -299,18 +310,16 @@
         let icon = '📄';
         if(f.type === 'Examen') icon = '🎓'; if(f.type === 'Control') icon = '⏱️';
 
-        // Lógica de Ratings
         const ratingsMap = f.ratings || {}; 
         const ratingValues = Object.values(ratingsMap);
         const ratingCount = ratingValues.length;
         const average = ratingCount > 0 ? (ratingValues.reduce((a, b) => a + b, 0) / ratingCount).toFixed(1) : 0;
         
-        // Generar estrellas HTML
         let starsHtml = '';
         for(let i=1; i<=5; i++) {
           const activeClass = i <= Math.round(average) ? 'text-yellow-400' : 'text-gray-300';
-          // Usamos una función global temporal para el onclick
-          starsHtml += `<button onclick="window.rateMaterial('${f.id}', ${i})" class="text-xl ${activeClass} hover:scale-125 transition">★</button>`;
+          // Agregamos clase star-btn y cursor-pointer
+          starsHtml += `<button onclick="window.rateMaterial('${f.id}', ${i})" class="text-xl ${activeClass} hover:scale-125 transition star-btn cursor-pointer" title="Calificar con ${i}">★</button>`;
         }
 
         row.innerHTML = `
@@ -341,16 +350,15 @@
       });
     }
 
-    // Función global para calificar
     window.rateMaterial = async (docId, rating) => {
       if(!currentUser) return showMsg("Error", "Debes iniciar sesión");
       try {
         const docRef = doc(db, "materiales_app", docId);
-        // Usamos notación de punto para actualizar una llave específica del mapa
         const updateObj = {};
         updateObj[`ratings.${currentUser.uid}`] = rating;
         await updateDoc(docRef, updateObj);
-        // No necesitamos recargar, el listener lo hará
+        // Feedback visual inmediato
+        showMsg("¡Voto Guardado! ⭐", "Tu calificación se ha registrado.");
       } catch (e) {
         console.error("Error rating:", e);
         showMsg("Error", "No se pudo guardar tu calificación.");
@@ -376,7 +384,7 @@
           uploadedByEmail: currentUser.email,
           createdAt: serverTimestamp(),
           downloadURL: '',
-          ratings: {} // Inicializamos mapa de ratings vacío
+          ratings: {}
         });
 
         const upTask = uploadBytesResumable(ref(storage, `materiales_app/${docRef.id}/${file.name}`), file);
