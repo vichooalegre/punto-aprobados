@@ -1,20 +1,26 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Punto Aprobados - EII PUCV</title>
+  <title>Punto Aprobados - ICI PUCV</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
+      darkMode: 'class', // Habilitar modo oscuro manual
       theme: {
         extend: {
           fontFamily: { sans: ['Inter', 'sans-serif'] },
           colors: {
             brand: { light: '#4da6ff', DEFAULT: '#004481', dark: '#002a50' },
-            gold: '#fbbf24'
+            gold: '#fbbf24',
+            dark: {
+              bg: '#0f172a',
+              card: '#1e293b',
+              text: '#f1f5f9'
+            }
           }
         },
       },
@@ -22,21 +28,70 @@
   </script>
   
   <style>
-    body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+    body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
+    
+    /* Modo Claro por defecto */
+    body.light { background-color: #f8fafc; color: #1e293b; }
+    
+    /* Modo Oscuro */
+    html.dark body { background-color: #0f172a; color: #f1f5f9; }
+    
     .modal-overlay { display: none; position: fixed; z-index: 50; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); justify-content: center; align-items: center; backdrop-filter: blur(3px); }
     .modal-overlay.flex { display: flex; }
     .card-hover:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
     .spinner { border: 4px solid #e2e8f0; border-top: 4px solid #004481; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     
-    /* Estilos para las estrellas */
     .star-rating button { color: #d1d5db; transition: transform 0.1s, color 0.2s; }
+    html.dark .star-rating button { color: #475569; } /* Estrellas apagadas en modo oscuro */
     .star-rating button:hover { transform: scale(1.2); }
-    /* Cursor pointer forzado para asegurar clickabilidad */
     .star-btn { cursor: pointer !important; }
+
+    /* Chips de filtro */
+    .filter-chip {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .filter-chip.active {
+        background-color: #004481;
+        color: white;
+        border-color: #004481;
+    }
+    html.dark .filter-chip.active {
+        background-color: #4da6ff;
+        border-color: #4da6ff;
+        color: #0f172a;
+    }
   </style>
 
   <script>
+    // Gestión del Modo Oscuro
+    function toggleDarkMode() {
+      const html = document.documentElement;
+      const isDark = html.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      updateThemeIcon(isDark);
+    }
+
+    function updateThemeIcon(isDark) {
+      const btn = document.getElementById('theme-toggle-btn');
+      if(btn) btn.innerHTML = isDark ? '☀️' : '🌙';
+    }
+
+    // Inicializar tema
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedTheme = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      
+      if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+        document.documentElement.classList.add('dark');
+        updateThemeIcon(true);
+      } else {
+        document.documentElement.classList.remove('dark');
+        updateThemeIcon(false);
+      }
+    });
+
     window.showPage = function(pageId) {
       ['page-login', 'page-home', 'page-upload', 'page-subject'].forEach(page => {
         const el = document.getElementById(page);
@@ -46,20 +101,20 @@
     };
   </script>
 </head>
-<body class="text-slate-800">
+<body class="text-slate-800 dark:text-slate-200">
 
   <!-- MODALES -->
   <div id="loading-modal" class="modal-overlay">
-    <div class="bg-white p-6 rounded-2xl shadow-2xl text-center max-w-sm w-full mx-4">
+    <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-2xl text-center max-w-sm w-full mx-4">
       <div class="spinner mb-4"></div>
-      <p id="loading-message" class="text-slate-600 font-medium">Procesando...</p>
+      <p id="loading-message" class="text-slate-600 dark:text-slate-300 font-medium">Procesando...</p>
     </div>
   </div>
   
   <div id="message-modal" class="modal-overlay">
-    <div class="bg-white p-8 rounded-2xl shadow-2xl text-center max-w-md w-full mx-4">
-      <h3 id="message-title" class="text-xl font-bold mb-2 text-slate-900"></h3>
-      <p id="message-body" class="mb-6 text-slate-600"></p>
+    <div class="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-2xl text-center max-w-md w-full mx-4">
+      <h3 id="message-title" class="text-xl font-bold mb-2 text-slate-900 dark:text-white"></h3>
+      <p id="message-body" class="mb-6 text-slate-600 dark:text-slate-300"></p>
       <button id="message-close-btn" class="bg-brand text-white px-6 py-2 rounded-lg hover:bg-brand-dark transition w-full font-medium">Entendido</button>
     </div>
   </div>
@@ -68,13 +123,13 @@
     
     <!-- VISTA LOGIN -->
     <div id="page-login" class="flex flex-col items-center justify-center min-h-[80vh]">
-      <div class="bg-white p-10 rounded-3xl shadow-2xl text-center max-w-md w-full border border-slate-100">
-        <div class="mb-6 bg-blue-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-4xl">🎓</div>
-        <h1 class="text-3xl font-extrabold text-brand mb-2">Punto Aprobados</h1>
-        <p class="text-slate-500 mb-8">Repositorio exclusivo para estudiantes de Ingeniería Civil Industrial PUCV.</p>
+      <div class="bg-white dark:bg-slate-800 p-10 rounded-3xl shadow-2xl text-center max-w-md w-full border border-slate-100 dark:border-slate-700">
+        <div class="mb-6 bg-blue-50 dark:bg-slate-700 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-4xl">🎓</div>
+        <h1 class="text-3xl font-extrabold text-brand dark:text-blue-400 mb-2">Punto Aprobados</h1>
+        <p class="text-slate-500 dark:text-slate-400 mb-8">Repositorio exclusivo para estudiantes de Ingeniería Civil Industrial PUCV.</p>
         
         <div class="space-y-4">
-          <button id="btn-login-google" class="w-full flex items-center justify-center gap-3 bg-white border-2 border-slate-200 text-slate-700 py-3 rounded-xl font-bold hover:bg-slate-50 hover:border-brand transition-all shadow-sm">
+          <button id="btn-login-google" class="w-full flex items-center justify-center gap-3 bg-white dark:bg-slate-700 border-2 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-white py-3 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-600 hover:border-brand transition-all shadow-sm">
             <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-6 h-6" alt="Google">
             Ingresar con correo PUCV
           </button>
@@ -87,60 +142,72 @@
     <div id="main-interface" class="hidden flex-grow flex flex-col">
       
       <!-- HEADER -->
-      <header class="bg-white shadow-sm rounded-2xl p-6 mb-8 border-t-4 border-brand flex flex-col md:flex-row justify-between items-center gap-6">
+      <header class="bg-white dark:bg-slate-800 shadow-sm rounded-2xl p-6 mb-8 border-t-4 border-brand flex flex-col md:flex-row justify-between items-center gap-6">
         <div class="text-center md:text-left">
-          <h1 class="text-3xl font-extrabold text-brand tracking-tight">Punto Aprobados</h1>
-          <p id="user-welcome" class="text-slate-500 text-sm font-medium">Bienvenido estudiante</p>
+          <h1 class="text-3xl font-extrabold text-brand dark:text-blue-400 tracking-tight">Punto Aprobados</h1>
+          <p id="user-welcome" class="text-slate-500 dark:text-slate-400 text-sm font-medium">Bienvenido estudiante</p>
         </div>
-        <nav class="flex gap-3">
-          <button onclick="window.showPage('page-home')" class="px-5 py-2.5 rounded-xl font-semibold text-brand bg-blue-50 hover:bg-blue-100 transition">📚 Biblioteca</button>
+        <nav class="flex gap-3 items-center">
+          <button onclick="toggleDarkMode()" id="theme-toggle-btn" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-xl transition mr-2" title="Cambiar Tema">🌙</button>
+          <button onclick="window.showPage('page-home')" class="px-5 py-2.5 rounded-xl font-semibold text-brand dark:text-blue-300 bg-blue-50 dark:bg-slate-700 hover:bg-blue-100 dark:hover:bg-slate-600 transition">📚 Biblioteca</button>
           <button onclick="window.showPage('page-upload')" class="px-5 py-2.5 rounded-xl font-semibold text-white bg-brand hover:bg-brand-dark shadow-md transition flex items-center gap-2"><span>📤</span> Subir</button>
-          <button id="btn-logout" class="px-4 py-2.5 rounded-xl font-semibold text-slate-500 hover:text-red-500 hover:bg-red-50 transition border border-transparent hover:border-red-100">Salir</button>
+          <button id="btn-logout" class="px-4 py-2.5 rounded-xl font-semibold text-slate-500 dark:text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition border border-transparent hover:border-red-100">Salir</button>
         </nav>
       </header>
 
       <main class="flex-grow">
         <!-- HOME -->
         <div id="page-home">
-          <div class="bg-gradient-to-r from-brand to-blue-600 rounded-3xl p-8 mb-8 text-white shadow-lg">
+          <!-- Buscador y Filtros -->
+          <div class="bg-gradient-to-r from-brand to-blue-600 dark:from-slate-800 dark:to-slate-900 rounded-3xl p-8 mb-8 text-white shadow-lg">
             <h2 class="text-2xl font-bold mb-2">Encuentra tu material</h2>
-            <input type="text" id="search-bar" placeholder="🔎 Escribe aquí (ej: Cálculo, Wilson)..." class="w-full p-4 rounded-xl text-slate-800 focus:ring-4 focus:ring-blue-300 outline-none shadow-inner mt-4">
+            <input type="text" id="search-bar" placeholder="🔎 Escribe aquí (ej: Cálculo, Wilson)..." class="w-full p-4 rounded-xl text-slate-800 dark:text-white dark:bg-slate-700 focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-900 outline-none shadow-inner mt-4 border-none">
+            
+            <!-- FILTROS AVANZADOS -->
+            <div class="flex flex-wrap gap-2 mt-4" id="filters-container">
+              <button onclick="applyFilter('all')" class="filter-chip active px-4 py-1.5 rounded-full border border-white/30 hover:bg-white/10 text-sm font-medium transition" data-type="all">Todos</button>
+              <button onclick="applyFilter('Examen')" class="filter-chip px-4 py-1.5 rounded-full border border-white/30 hover:bg-white/10 text-sm font-medium transition" data-type="Examen">🎓 Exámenes</button>
+              <button onclick="applyFilter('Guia')" class="filter-chip px-4 py-1.5 rounded-full border border-white/30 hover:bg-white/10 text-sm font-medium transition" data-type="Guia">📄 Guías</button>
+              <button onclick="applyFilter('Apunte')" class="filter-chip px-4 py-1.5 rounded-full border border-white/30 hover:bg-white/10 text-sm font-medium transition" data-type="Apunte">📝 Apuntes</button>
+              <button onclick="applyFilter('Resumen')" class="filter-chip px-4 py-1.5 rounded-full border border-white/30 hover:bg-white/10 text-sm font-medium transition" data-type="Resumen">📌 Resúmenes</button>
+            </div>
           </div>
+
           <div id="subjects-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
         </div>
 
         <!-- SUBIR MATERIAL -->
         <div id="page-upload" class="hidden">
-          <button onclick="window.showPage('page-home')" class="mb-4 text-slate-500 hover:text-brand font-medium flex items-center gap-1">← Volver</button>
-          <div class="bg-white p-8 rounded-3xl shadow-xl max-w-2xl mx-auto border border-slate-100">
-            <h2 class="text-2xl font-bold text-slate-800 mb-6">Subir Aporte</h2>
+          <button onclick="window.showPage('page-home')" class="mb-4 text-slate-500 hover:text-brand font-medium flex items-center gap-1 dark:text-slate-400 dark:hover:text-blue-400">← Volver</button>
+          <div class="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-xl max-w-2xl mx-auto border border-slate-100 dark:border-slate-700">
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-6">Subir Aporte</h2>
             <form id="upload-form" class="space-y-5">
               <div>
-                <label class="block text-sm font-bold text-slate-700 mb-1">Asignatura</label>
-                <input list="subjects-options" name="subject" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-brand outline-none" placeholder="Selecciona o escribe..." required>
+                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Asignatura</label>
+                <input list="subjects-options" name="subject" class="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl focus:border-brand dark:focus:border-blue-400 outline-none dark:text-white" placeholder="Selecciona o escribe..." required>
                 <datalist id="subjects-options">
                   <option value="Álgebra Lineal"><option value="Física Mecánica 1"><option value="Fundamentos de Matemáticas"><option value="Introducción al Modelamiento Discreto"><option value="Fundamentos de Ingeniería Industrial"><option value="Fundamentos de Química"><option value="Mundo Contemporáneo"><option value="Cálculo 1"><option value="Introducción a las Tecnologías de la Información"><option value="Taller de Creatividad e Innovación"><option value="Física Mecánica 2"><option value="Cálculo 2"><option value="Arquitectura de Sistemas de Software"><option value="Termodinámica"><option value="Física Electromagnetismo"><option value="Cálculo 3"><option value="Operaciones Unitarias"><option value="Ecuaciones Diferenciales"><option value="Electrotecnia"><option value="Análisis Económico 1"><option value="Fundamentos de Modelos Probabilísticos"><option value="Inferencia Estadística"><option value="Taller de Comunicación y Negociación"><option value="Optimización Lineal"><option value="Electrónica Industrial"><option value="Análisis Económico 2"><option value="Teoría de Sistemas"><option value="Teoría de la Organización"><option value="Taller de Sistemas Productivos"><option value="Investigación de Operaciones"><option value="Gestión Contable y Presupuestaria"><option value="Gestión de Información"><option value="Ética en Ingeniería"><option value="Gestión Comercial"><option value="Evaluación de Proyectos"><option value="Simulación"><option value="Taller de Liderazgo y Trabajo en Equipo"><option value="Planificación de Operaciones"><option value="Ingeniería Financiera"><option value="Modelamiento de Procesos y Sistemas"><option value="Logística Integral"><option value="Gestión de Servicios"><option value="Derecho Empresarial y Ambiental"><option value="Proyecto de Ingeniería Industrial"><option value="Taller de Emprendimiento">
                 </datalist>
               </div>
               <div>
-                <label class="block text-sm font-bold text-slate-700 mb-1">Profesor(a)</label>
-                <input type="text" name="professor" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" required>
+                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Profesor(a)</label>
+                <input type="text" name="professor" class="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-none dark:text-white" required>
               </div>
               <div>
-                <label class="block text-sm font-bold text-slate-700 mb-1">Autor</label>
-                <input type="text" name="author" id="input-author" class="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:border-brand transition-colors" placeholder="Ej: Tu nombre, o el del Profesor">
+                <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Autor</label>
+                <input type="text" name="author" id="input-author" class="w-full p-3 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-none focus:border-brand transition-colors dark:text-white" placeholder="Ej: Tu nombre, o el del Profesor">
                 <p class="text-xs text-slate-400 mt-1">Puedes editar este campo si el material no es tuyo.</p>
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-bold text-slate-700 mb-1">Tipo</label>
-                  <select name="type" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none" required>
+                  <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Tipo</label>
+                  <select name="type" class="w-full p-3 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-none dark:text-white" required>
                     <option value="Apunte">📝 Apunte</option><option value="Guia">📄 Guía</option><option value="Examen">🎓 Examen</option><option value="Control">⏱️ Control</option><option value="Resumen">📌 Resumen</option><option value="Libro">📚 Libro</option>
                   </select>
                 </div>
                 <div>
-                  <label class="block text-sm font-bold text-slate-700 mb-1">Archivo</label>
-                  <input type="file" name="file" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:bg-blue-50 file:text-brand" required>
+                  <label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">Archivo</label>
+                  <input type="file" name="file" class="w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:bg-blue-50 dark:file:bg-slate-600 file:text-brand dark:file:text-blue-300" required>
                 </div>
               </div>
               <button type="submit" class="w-full bg-brand text-white py-3.5 rounded-xl font-bold hover:bg-brand-dark transition-all">Subir Material 🚀</button>
@@ -150,16 +217,16 @@
 
         <!-- VISTA ASIGNATURA -->
         <div id="page-subject" class="hidden">
-          <button onclick="window.showPage('page-home')" class="mb-6 text-slate-500 hover:text-brand font-medium flex items-center gap-1">← Volver</button>
-          <div class="bg-brand rounded-3xl p-8 mb-8 text-white shadow-lg">
+          <button onclick="window.showPage('page-home')" class="mb-6 text-slate-500 hover:text-brand font-medium flex items-center gap-1 dark:text-slate-400 dark:hover:text-blue-400">← Volver</button>
+          <div class="bg-brand dark:bg-slate-800 rounded-3xl p-8 mb-8 text-white shadow-lg">
             <h2 id="subject-title" class="text-3xl font-bold"></h2>
-            <p class="text-blue-100 mt-1">Material disponible</p>
+            <p class="text-blue-100 dark:text-slate-300 mt-1">Material disponible</p>
           </div>
           <div id="subject-files-list" class="space-y-3"></div>
         </div>
       </main>
       
-      <footer class="mt-12 py-6 text-center text-slate-400 text-sm border-t border-slate-200">
+      <footer class="mt-12 py-6 text-center text-slate-400 text-sm border-t border-slate-200 dark:border-slate-700">
         <p>Punto Aprobados © 2025 • Ingeniería Civil Industrial PUCV</p>
       </footer>
     </div>
@@ -188,7 +255,8 @@
 
     let app, auth, db, storage, currentUser;
     let allMaterials = [];
-    let currentSubjectName = null; // Variable para saber qué estamos viendo
+    let currentSubjectName = null; 
+    let activeFilter = 'all'; // Filtro por defecto
 
     try {
       app = initializeApp(firebaseConfig);
@@ -246,25 +314,38 @@
         allMaterials = [];
         snapshot.forEach(doc => allMaterials.push({id: doc.id, ...doc.data()}));
         
-        // Renderizamos Home
         renderHome(document.getElementById('search-bar').value);
-        
-        // CRUCIAL: Si el usuario está viendo una asignatura, refrescamos esa vista también
         if(currentSubjectName && !document.getElementById('page-subject').classList.contains('hidden')) {
             showSubjectPage(currentSubjectName);
         }
       });
     }
 
-    function renderHome(filter = '') {
+    // Función para manejar clicks en filtros
+    window.applyFilter = (type) => {
+      activeFilter = type;
+      // Actualizar UI de botones
+      document.querySelectorAll('.filter-chip').forEach(btn => {
+        if(btn.dataset.type === type) btn.classList.add('active');
+        else btn.classList.remove('active');
+      });
+      // Re-renderizar
+      renderHome(document.getElementById('search-bar').value);
+    };
+
+    function renderHome(searchText = '') {
       const list = document.getElementById('subjects-list');
       const map = new Map();
-      const cleanFilter = filter.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      const cleanFilter = searchText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
       allMaterials.forEach(m => {
+        // FILTRO POR TIPO (NUEVO)
+        if (activeFilter !== 'all' && m.type !== activeFilter) return;
+
         const subj = m.subject || 'Otros';
         const meta = `${subj} ${m.professor} ${m.author || ''}`.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-        if (filter && !meta.includes(cleanFilter)) return;
+        if (searchText && !meta.includes(cleanFilter)) return;
+        
         if (!map.has(subj)) map.set(subj, { count: 0, profs: new Set() });
         const entry = map.get(subj);
         entry.count++;
@@ -273,20 +354,20 @@
 
       list.innerHTML = '';
       if (map.size === 0) {
-        list.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400">No se encontraron resultados.</div>`;
+        list.innerHTML = `<div class="col-span-full text-center py-10 text-slate-400 dark:text-slate-500">No se encontraron resultados.</div>`;
         return;
       }
 
       [...map.entries()].sort().forEach(([subj, data]) => {
         const card = document.createElement('div');
-        card.className = 'bg-white p-6 rounded-2xl shadow-sm border border-slate-100 cursor-pointer card-hover group';
+        card.className = 'bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 cursor-pointer card-hover group';
         card.innerHTML = `
           <div class="flex justify-between items-start mb-3">
-            <div class="p-3 bg-blue-50 rounded-xl text-brand text-xl">📚</div>
-            <span class="bg-slate-100 text-slate-600 text-xs font-bold px-2 py-1 rounded-lg">${data.count} Docs</span>
+            <div class="p-3 bg-blue-50 dark:bg-slate-700 rounded-xl text-brand dark:text-blue-300 text-xl">📚</div>
+            <span class="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-bold px-2 py-1 rounded-lg">${data.count} Docs</span>
           </div>
-          <h3 class="font-bold text-slate-800 text-lg group-hover:text-brand transition">${subj}</h3>
-          <p class="text-sm text-slate-500 mt-2 truncate">Prof: ${[...data.profs].join(', ') || 'Varios'}</p>
+          <h3 class="font-bold text-slate-800 dark:text-white text-lg group-hover:text-brand dark:group-hover:text-blue-300 transition">${subj}</h3>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-2 truncate">Prof: ${[...data.profs].join(', ') || 'Varios'}</p>
         `;
         card.onclick = () => showSubjectPage(subj);
         list.appendChild(card);
@@ -294,18 +375,21 @@
     }
 
     function showSubjectPage(subj) {
-      currentSubjectName = subj; // Guardamos dónde estamos
+      currentSubjectName = subj; 
       window.showPage('page-subject');
       document.getElementById('subject-title').textContent = subj;
       const list = document.getElementById('subject-files-list');
       list.innerHTML = '';
 
+      // Aquí también aplicamos el filtro activo si queremos, o mostramos todo.
+      // Por usabilidad, dentro de la asignatura es mejor mostrar todo, o filtrar localmente.
+      // Mostraremos todo por defecto dentro de la asignatura.
       const files = allMaterials.filter(m => m.subject === subj);
       files.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       
       files.forEach(f => {
         const row = document.createElement('div');
-        row.className = 'bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4';
+        row.className = 'bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex flex-col md:flex-row justify-between items-center gap-4';
         
         let icon = '📄';
         if(f.type === 'Examen') icon = '🎓'; if(f.type === 'Control') icon = '⏱️';
@@ -317,8 +401,7 @@
         
         let starsHtml = '';
         for(let i=1; i<=5; i++) {
-          const activeClass = i <= Math.round(average) ? 'text-yellow-400' : 'text-gray-300';
-          // Agregamos clase star-btn y cursor-pointer
+          const activeClass = i <= Math.round(average) ? 'text-yellow-400' : 'text-gray-300 dark:text-slate-600';
           starsHtml += `<button onclick="window.rateMaterial('${f.id}', ${i})" class="text-xl ${activeClass} hover:scale-125 transition star-btn cursor-pointer" title="Calificar con ${i}">★</button>`;
         }
 
@@ -327,11 +410,11 @@
             <div class="flex items-center gap-3">
               <span class="text-2xl">${icon}</span>
               <div>
-                <h4 class="font-bold text-slate-800">${f.fileName}</h4>
-                <div class="flex flex-wrap gap-3 text-xs text-slate-500 mt-1">
-                  <span class="bg-slate-100 px-2 py-0.5 rounded">🏷️ ${f.type}</span>
+                <h4 class="font-bold text-slate-800 dark:text-white">${f.fileName}</h4>
+                <div class="flex flex-wrap gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  <span class="bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded">🏷️ ${f.type}</span>
                   <span>👨‍🏫 ${f.professor}</span>
-                  <span class="text-brand font-medium">👤 ${f.author || 'Anónimo'}</span>
+                  <span class="text-brand dark:text-blue-300 font-medium">👤 ${f.author || 'Anónimo'}</span>
                 </div>
               </div>
             </div>
@@ -339,11 +422,11 @@
           
           <div class="flex flex-col items-end gap-2">
             <div class="flex items-center gap-1">
-              <span class="text-sm font-bold text-slate-700 mr-2">${average > 0 ? average : '-'}</span>
+              <span class="text-sm font-bold text-slate-700 dark:text-white mr-2">${average > 0 ? average : '-'}</span>
               <div class="star-rating flex">${starsHtml}</div>
-              <span class="text-xs text-slate-400">(${ratingCount})</span>
+              <span class="text-xs text-slate-400 dark:text-slate-500">(${ratingCount})</span>
             </div>
-            <a href="${f.downloadURL}" target="_blank" class="w-full md:w-auto text-center bg-white border-2 border-brand text-brand hover:bg-brand hover:text-white px-6 py-1.5 rounded-lg font-bold transition text-sm">Descargar</a>
+            <a href="${f.downloadURL}" target="_blank" class="w-full md:w-auto text-center bg-white dark:bg-slate-700 border-2 border-brand dark:border-slate-500 text-brand dark:text-white hover:bg-brand hover:text-white dark:hover:bg-slate-600 px-6 py-1.5 rounded-lg font-bold transition text-sm">Descargar</a>
           </div>
         `;
         list.appendChild(row);
@@ -357,7 +440,6 @@
         const updateObj = {};
         updateObj[`ratings.${currentUser.uid}`] = rating;
         await updateDoc(docRef, updateObj);
-        // Feedback visual inmediato
         showMsg("¡Voto Guardado! ⭐", "Tu calificación se ha registrado.");
       } catch (e) {
         console.error("Error rating:", e);
